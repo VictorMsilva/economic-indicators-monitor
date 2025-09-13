@@ -1,0 +1,44 @@
+{
+  "usdbrl": {
+    "series_id": 1, 
+    "name": "USD-BRL Exchange Rate",
+    "description": "Daily exchange rate between US Dollar and Brazilian Real",
+    "frequency": "daily",
+    "check_interval_minutes": 60,
+    "source": {
+      "api_endpoint": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{series_id}/dados?formato=json",
+      "parameters": {
+        "inicio": "01/01/2020", 
+        "fim": "" 
+      }
+    }
+  },
+  "selic": {
+    "series_id": 11,
+    "name": "Selic Rate",
+    "description": "Brazilian base interest rate",
+    "frequency": "daily",
+    "check_interval_minutes": 1440,
+    "source": {
+      "api_endpoint": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{series_id}/dados?formato=json",
+      "parameters": {
+        "inicio": "01/01/2020",
+        "fim": ""
+      }
+    }
+  },
+  "ipca": {
+    "series_id": 433,
+    "name": "IPCA - Consumer Price Index",
+    "description": "Official Brazilian inflation index",
+    "frequency": "monthly",
+    "check_interval_minutes": 1440,
+    "source": {
+      "api_endpoint": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{series_id}/dados?formato=json",
+      "parameters": {
+        "inicio": "01/01/2020",
+        "fim": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# Local env files (keep secrets out of git)
+.env
+
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+
+# Distribution
+*.zip
+*.egg-info/
+
+# Editor/project files
+.vscode/
+.DS_Store

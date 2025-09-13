@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"data_lake_bucket","Source":"./modules/s3","Dir":"modules/s3"}]}

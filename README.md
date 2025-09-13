@@ -83,9 +83,9 @@ Update data only when there is a change in the indicators, processing them in th
   - Queue per indicator and stage (e.g., `sqs-usdbrl-silver2gold`)
   - Ensures reliable delivery and decoupling between transformations
 - **Lambda Functions**
-  - `lambda-monitor-[indicator]`: checks SGS API and verifies if there was a change
-  - `lambda-bronze2silver-[indicator]`: validates and transforms raw data
-  - `lambda-silver2gold-[indicator]`: calculates final indicators
+  - `lambdas/[indicator]/monitor`: checks SGS API and verifies if there was a change
+  - `lambdas/[indicator]/bronze2silver`: validates and transforms raw data
+  - `lambdas/[indicator]/silver2gold`: calculates final indicators
 
 ---
 
@@ -142,25 +142,59 @@ Location: `s3://dl-prod/quarantine/[indicator]/`
 ## 9. Folder Structure
 
 ```
-sgs-indicators-pipeline/
+economic-indicators-monitor/
 ├── README.md
+├── DEVELOPMENT.md
 ├── lambdas/
-│   ├── monitor-usdbrl/
-│   ├── bronze2silver-usdbrl/
-│   ├── silver2gold-usdbrl/
+│   ├── usdbrl/
+│   │   ├── monitor/
+│   │   ├── bronze2silver/
+│   │   └── silver2gold/
+│   ├── selic/
+│   │   ├── monitor/
+│   │   ├── bronze2silver/
+│   │   └── silver2gold/
+│   ├── ipca/
+│   │   ├── monitor/
+│   │   ├── bronze2silver/
+│   │   └── silver2gold/
 │   └── shared/
 ├── infrastructure/
-│   ├── eventbridge/
-│   ├── sqs/
-│   ├── cloudwatch/
-│   └── s3-buckets/
+│   └── terraform/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       ├── provider.tf
+│       ├── setup-backend.sh
+│       └── modules/
+│           ├── s3/
+│           └── lambda/
 ├── configs/
 │   ├── indicators.json
 │   └── dq-rules.yaml
 ├── notebooks/
 │   └── analysis-athena.ipynb
 ├── docs/
-│   └── architecture-diagram.md
+│   └── Economic-Indicators.excalidraw
 └── tests/
     └── unit/
+```
+
+## 10. Infrastructure as Code
+
+The project uses **Terraform** for infrastructure management:
+
+- **S3 Buckets**: Data lake with cost optimization (Intelligent Tiering)
+- **Lambda Functions**: Automated deployment with IAM roles
+- **DynamoDB**: State management for indicators
+- **EventBridge & SQS**: Event-driven orchestration
+- **Remote State**: S3 backend with DynamoDB locking
+
+**Deploy infrastructure:**
+```bash
+cd infrastructure/terraform
+./setup-backend.sh      # Create Terraform backend (one-time)
+terraform init          # Initialize Terraform
+terraform plan          # Preview changes
+terraform apply         # Deploy infrastructure
 ```

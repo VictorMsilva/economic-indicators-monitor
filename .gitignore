@@ -1,12 +1,13 @@
 # Local env files (keep secrets out of git)
 .env
-
+.env.aws
 
 # Python
 __pycache__/
 *.py[cod]
 
 # Virtual environment
+.venv/
 venv/
 
 # Distribution
@@ -16,3 +17,11 @@ venv/
 # Editor/project files
 .vscode/
 .DS_Store
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+*.tfplan

@@ -2,28 +2,37 @@
 
 ## Getting Started
 
-This project uses Python 3.9+ for Lambda functions and Terraform for infrastructure management.
+This project uses Python 3.9+ for Lambda functions and AWS CDK v2 for infrastructure management.
 
 ### Prerequisites
 
-1. **Terraform**: Install from [terraform.io](https://terraform.io)
+1. **AWS CDK**: Install from [AWS CDK Documentation](https://docs.aws.amazon.com/cdk/)
+   ```bash
+   npm install -g aws-cdk
+   ```
 2. **AWS CLI**: Configured with appropriate credentials
 3. **Python 3.9+**: For Lambda development
+4. **Node.js**: Required for CDK operations
 
 ### Setup Development Environment
 
 1. Create a virtual environment:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
-2. Install development dependencies:
+2. Install CDK dependencies:
+   ```bash
+   pip install aws-cdk-lib constructs
+   ```
+
+3. Install development dependencies:
    ```bash
    pip install pytest boto3 moto requests python-dateutil
    ```
 
-3. Install specific function dependencies:
+4. Install specific function dependencies:
    ```bash
    cd lambdas/usdbrl/monitor
    pip install -r requirements.txt
@@ -31,24 +40,22 @@ This project uses Python 3.9+ for Lambda functions and Terraform for infrastruct
 
 ### Infrastructure Setup
 
-1. **Initialize Terraform backend** (one-time setup):
+1. **Bootstrap CDK** (one-time setup):
    ```bash
-   cd infrastructure/terraform
-   ./setup-backend.sh
+   cdk bootstrap
    ```
 
 2. **Deploy infrastructure**:
    ```bash
-   terraform init
-   terraform plan    # Review changes
-   terraform apply   # Deploy
+   cdk deploy                    # Deploy all resources
+   cdk deploy --hotswap         # Fast deployment for development
+   cdk diff                     # Show changes before deploy
    ```
 
 3. **Manage infrastructure**:
    ```bash
-   terraform plan    # Preview changes
-   terraform apply   # Apply changes
-   terraform destroy # Clean up (careful!)
+   cdk synth                    # Generate CloudFormation template
+   cdk destroy                  # Clean up (careful!)
    ```
 
 ### Testing Locally
@@ -62,11 +69,11 @@ python test_local.py
 
 ### Infrastructure Overview
 
-- **S3 Bucket**: `dl-economic-indicators-prod` (data lake)
-- **DynamoDB**: `sgs-indicators-state` (Lambda state management)
-- **Terraform Backend**: 
-  - S3: `economic-indicators-terraform-state`
-  - DynamoDB: `economic-indicators-terraform-locks`
+- **S3 Bucket**: Data lake with Bronze/Silver/Gold layers
+- **DynamoDB**: State management for Lambda functions
+- **API Gateway**: REST API endpoints for data consumption
+- **Lambda Functions**: Processing pipeline (monitor, bronze2silver, silver2gold, api)
+- **CDK Configuration**: Infrastructure as Code with TypeScript/Python constructs
 
 ### Folder Structure
 
@@ -74,14 +81,15 @@ The project is organized by indicator first, then by processing stage:
 
 ```
 lambdas/
-├── usdbrl/               # USD-BRL Exchange Rate
+├── usdbrl/               # USD-BRL Exchange Rate (COMPLETE)
 │   ├── monitor/          # Monitors API for changes
 │   ├── bronze2silver/    # Processes raw data
-│   └── silver2gold/      # Creates refined metrics
-├── selic/                # Selic Rate
+│   └── silver2gold/      # Creates 17 technical indicators + analytics
+├── selic/                # Selic Rate (PLANNED)
 │   ├── monitor/
 │   ├── bronze2silver/
 │   └── silver2gold/
+├── api/                  # REST API Gateway Function (COMPLETE)
 └── shared/               # Shared utility functions
 ```
 
@@ -91,23 +99,35 @@ lambdas/
 
 ### Infrastructure as Code
 
-The project uses **Terraform modules** for infrastructure:
+The project uses **AWS CDK v2** for infrastructure:
 
 ```
-infrastructure/terraform/
-├── modules/
-│   ├── s3/           # S3 bucket with cost optimization
-│   └── lambda/       # Lambda functions with IAM roles
-├── main.tf           # Main infrastructure
-├── variables.tf      # Configuration variables
-└── outputs.tf        # Infrastructure outputs
+infra-aws-cdk/
+├── app.py                # CDK app entry point
+├── stacks/              
+│   └── economic_indicators_stack.py    # Main infrastructure stack
+├── constructs/           # Reusable CDK constructs
+├── cdk.json             # CDK configuration
+└── requirements.txt     # CDK dependencies
 ```
 
-**Key Resources:**
-- S3 bucket with Intelligent Tiering (cost optimization)
-- DynamoDB for Lambda state management
-- IAM roles with least privilege access
-- Remote state with locking mechanism
+### API Testing
+
+Test the deployed API with different modes:
+
+```bash
+# Base URL (replace with your deployed endpoint)
+API_URL="https://j2a31q0ubd.execute-api.us-east-2.amazonaws.com/prod"
+
+# Test summary mode - business intelligence
+curl "$API_URL/indicators/usdbrl?mode=summary"
+
+# Test aggregations mode - technical analysis
+curl "$API_URL/indicators/usdbrl?mode=aggregations"
+
+# Test data mode - historical data
+curl "$API_URL/indicators/usdbrl?mode=data&limit=5"
+```
 
 ### Contributing
 

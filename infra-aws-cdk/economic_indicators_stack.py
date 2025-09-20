@@ -10,6 +10,7 @@ from constructs import Construct
 from usdbrl_lambdas import USDBRLLambdas
 from usdbrl_orchestration import USDBRLOrchestration
 from s3_events import S3Events
+from api_module import EconomicIndicatorsAPI
 
 
 class EconomicIndicatorsStack(Stack):
@@ -112,10 +113,21 @@ class EconomicIndicatorsStack(Stack):
             data_lake_bucket=self.data_lake_bucket
         )
         
+        # Create Economic Indicators API
+        api_resources = EconomicIndicatorsAPI.create_api(
+            stack=self,
+            lambda_role=lambda_role,
+            data_lake_bucket=self.data_lake_bucket,
+            env_vars=lambda_env
+        )
+        
         # Store references for potential cross-stack usage
         self.monitor_function = lambda_functions['monitor']
         self.bronze2silver_function = lambda_functions['bronze2silver'] 
         self.silver2gold_function = lambda_functions['silver2gold']
+        self.api_lambda = api_resources['api_lambda']
+        self.api_gateway = api_resources['api_gateway']
+        self.api_url = api_resources['api_url']
         
         # Store orchestration references
         self.silver2gold_queue = orchestration['silver2gold_queue']

@@ -179,8 +179,7 @@ economic-indicators-monitor/
 │   ├── economic_indicators_stack.py # Main stack (S3, DynamoDB, IAM)
 │   └── usdbrl_lambdas.py          # USD-BRL Lambda functions module
 ├── configs/                        # Configuration Files
-│   ├── indicators.json
-│   └── dq-rules.yaml
+│   └── indicators.json
 ├── notebooks/                      # Jupyter Notebooks
 │   └── analysis-athena.ipynb
 ├── docs/                          # Documentation

@@ -88,7 +88,6 @@ lambdas/
 ### Configuration
 
 - `configs/indicators.json`: Contains API endpoints and parameters for each indicator
-- `configs/dq-rules.yaml`: Data quality validation rules
 
 ### Infrastructure as Code
 

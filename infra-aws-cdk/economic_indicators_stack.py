@@ -8,6 +8,8 @@ from aws_cdk import (
 )
 from constructs import Construct
 from usdbrl_lambdas import USDBRLLambdas
+from usdbrl_orchestration import USDBRLOrchestration
+from s3_events import S3Events
 
 
 class EconomicIndicatorsStack(Stack):
@@ -100,7 +102,23 @@ class EconomicIndicatorsStack(Stack):
             env_vars=lambda_env
         )
         
+        # Setup S3 Event Notifications to EventBridge for USD-BRL
+        s3_events = S3Events.setup_usdbrl_events(self.data_lake_bucket)
+        
+        # Create Orchestration (EventBridge Rules, SQS, Scheduler)
+        orchestration = USDBRLOrchestration.create_orchestration(
+            stack=self,
+            lambda_functions=lambda_functions,
+            data_lake_bucket=self.data_lake_bucket
+        )
+        
         # Store references for potential cross-stack usage
         self.monitor_function = lambda_functions['monitor']
         self.bronze2silver_function = lambda_functions['bronze2silver'] 
         self.silver2gold_function = lambda_functions['silver2gold']
+        
+        # Store orchestration references
+        self.silver2gold_queue = orchestration['silver2gold_queue']
+        self.bronze_rule = orchestration['bronze_rule']
+        self.silver_rule = orchestration['silver_rule'] 
+        self.monitor_schedule = orchestration['monitor_schedule']

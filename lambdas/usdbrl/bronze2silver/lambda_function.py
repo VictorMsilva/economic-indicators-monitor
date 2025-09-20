@@ -155,16 +155,23 @@ def process_bronze_file(bronze_s3_key: str) -> Dict[str, Any]:
 def lambda_handler(event, context):
     """Main Lambda handler for Bronze to Silver processing"""
     try:
-        # Parse S3 event
+        bronze_s3_key = None
+        
+        # Parse different event types
         if 'Records' in event:
-            # Triggered by S3 event
+            # Triggered by S3 event directly
             s3_event = event['Records'][0]['s3']
             bronze_s3_key = s3_event['object']['key']
+        elif 'detail' in event and 'object' in event['detail']:
+            # Triggered by EventBridge from S3
+            bronze_s3_key = event['detail']['object']['key']
         else:
             # Direct invocation
             bronze_s3_key = event.get('s3_key')
-            if not bronze_s3_key:
-                raise ValueError("Missing s3_key in event")
+            
+        if not bronze_s3_key:
+            logger.error(f"Could not extract S3 key from event: {json.dumps(event)}")
+            raise ValueError("Missing s3_key in event")
         
         logger.info(f"Processing Bronze file: {bronze_s3_key}")
         

@@ -17,24 +17,37 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Configuration
-CONFIG_PATH = os.environ.get('CONFIG_PATH', '/opt/indicators.json')
 INDICATOR = 'usdbrl'
-BRONZE_BUCKET = os.environ.get('BRONZE_BUCKET', 'dl-economic-indicators-prod')
+BRONZE_BUCKET = os.environ.get('BUCKET_NAME', 'dl-economic-indicators-prod')
 BRONZE_PREFIX = os.environ.get('BRONZE_PREFIX', 'bronze')
 DYNAMODB_TABLE = os.environ.get('DYNAMODB_TABLE', 'sgs-indicators-state')
+
+# USD-BRL Indicator Configuration
+USDBRL_CONFIG = {
+    "series_id": 1, 
+    "name": "USD-BRL Exchange Rate",
+    "description": "Daily exchange rate between US Dollar and Brazilian Real",
+    "frequency": "daily",
+    "check_interval_minutes": 60,
+    "source": {
+        "api_endpoint": "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{series_id}/dados?formato=json",
+        "parameters": {
+            "inicio": "01/01/2020", 
+            "fim": "" 
+        }
+    }
+}
 
 def load_config(indicator_name):
     """
     Load configuration for a specific indicator
     """
     try:
-        with open(CONFIG_PATH, 'r') as f:
-            config = json.load(f)
+        if indicator_name == 'usdbrl':
+            return USDBRL_CONFIG
+        else:
+            raise ValueError(f"Indicator {indicator_name} not supported")
         
-        if indicator_name not in config:
-            raise ValueError(f"Indicator {indicator_name} not found in config")
-        
-        return config[indicator_name]
     except Exception as e:
         logger.error(f"Error loading configuration: {str(e)}")
         raise

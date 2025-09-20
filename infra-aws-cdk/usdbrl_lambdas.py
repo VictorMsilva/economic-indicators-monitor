@@ -5,6 +5,7 @@ Simple module to organize Lambda functions separately from main stack
 import os
 from aws_cdk import (
     Duration,
+    BundlingOptions,
     aws_lambda as lambda_,
     aws_iam as iam,
     aws_logs as logs,
@@ -28,7 +29,16 @@ class USDBRLLambdas:
             function_name="usdbrl-monitor",
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_function.lambda_handler",
-            code=lambda_.Code.from_asset(os.path.join(project_root, "lambdas/usdbrl/monitor")),
+            code=lambda_.Code.from_asset(
+                os.path.join(project_root, "lambdas/usdbrl/monitor"),
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_12.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+                    ]
+                )
+            ),
             role=lambda_role,
             timeout=Duration.seconds(60),
             memory_size=256,
@@ -43,7 +53,16 @@ class USDBRLLambdas:
             function_name="usdbrl-bronze2silver",
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_function.lambda_handler",
-            code=lambda_.Code.from_asset(os.path.join(project_root, "lambdas/usdbrl/bronze2silver")),
+            code=lambda_.Code.from_asset(
+                os.path.join(project_root, "lambdas/usdbrl/bronze2silver"),
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_12.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+                    ]
+                )
+            ),
             role=lambda_role,
             timeout=Duration.seconds(60),
             memory_size=512,
@@ -58,7 +77,16 @@ class USDBRLLambdas:
             function_name="usdbrl-silver2gold", 
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="lambda_function.lambda_handler",
-            code=lambda_.Code.from_asset(os.path.join(project_root, "lambdas/usdbrl/silver2gold")),
+            code=lambda_.Code.from_asset(
+                os.path.join(project_root, "lambdas/usdbrl/silver2gold"),
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_12.bundling_image,
+                    command=[
+                        "bash", "-c",
+                        "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+                    ]
+                )
+            ),
             role=lambda_role,
             timeout=Duration.seconds(120),
             memory_size=512,

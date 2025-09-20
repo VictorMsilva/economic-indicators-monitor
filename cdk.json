@@ -1,0 +1,7 @@
+{
+    "app": "python infra-aws-cdk/app.py",
+    "context": {
+        "aws-cdk:enableDiffNoFail": true,
+        "@aws-cdk/core:stackRelativeExports": true
+    }
+}

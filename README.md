@@ -19,6 +19,21 @@ Automated data pipeline for Brazilian economic indicators (Selic, IPCA, exchange
   - [7. Consumption \& Analytics](#7-consumption--analytics)
   - [8. Observability \& Monitoring](#8-observability--monitoring)
   - [9. Folder Structure](#9-folder-structure)
+  - [10. Infrastructure as Code](#10-infrastructure-as-code)
+    - [🏗️ **CDK Architecture:**](#️-cdk-architecture)
+    - [📦 **Infrastructure Components:**](#-infrastructure-components)
+    - [🚀 **Deploy Infrastructure:**](#-deploy-infrastructure)
+    - [🔄 **CDK Project Structure:**](#-cdk-project-structure)
+    - [📋 **CDK Configuration Files:**](#-cdk-configuration-files)
+    - [🎯 **Migration from Terraform:**](#-migration-from-terraform)
+  - [11. Current Implementation Status](#11-current-implementation-status)
+    - [✅ **Completed:**](#-completed)
+    - [🚧 **In Progress:**](#-in-progress)
+    - [📋 **Planned:**](#-planned)
+  - [12. Getting Started](#12-getting-started)
+    - [🔧 **Prerequisites:**](#-prerequisites)
+    - [🚀 **Quick Setup:**](#-quick-setup)
+    - [📊 **Verify Deployment:**](#-verify-deployment)
 
 ---
 
@@ -145,56 +160,175 @@ Location: `s3://dl-prod/quarantine/[indicator]/`
 economic-indicators-monitor/
 ├── README.md
 ├── DEVELOPMENT.md
-├── lambdas/
-│   ├── usdbrl/
+├── lambdas/                        # Lambda Functions
+│   ├── usdbrl/                     # USD-BRL Pipeline (Implemented)
+│   │   ├── monitor/                # Monitors SGS API for changes
+│   │   ├── bronze2silver/          # Data quality and validation
+│   │   └── silver2gold/            # Financial indicators calculation
+│   ├── selic/                      # Selic Pipeline (Future)
 │   │   ├── monitor/
 │   │   ├── bronze2silver/
 │   │   └── silver2gold/
-│   ├── selic/
+│   ├── ipca/                       # IPCA Pipeline (Future)
 │   │   ├── monitor/
 │   │   ├── bronze2silver/
 │   │   └── silver2gold/
-│   ├── ipca/
-│   │   ├── monitor/
-│   │   ├── bronze2silver/
-│   │   └── silver2gold/
-│   └── shared/
-├── infrastructure/
-│   └── terraform/
-│       ├── main.tf
-│       ├── variables.tf
-│       ├── outputs.tf
-│       ├── provider.tf
-│       ├── setup-backend.sh
-│       └── modules/
-│           ├── s3/
-│           └── lambda/
-├── configs/
+│   └── shared/                     # Shared utilities and libraries
+├── infra-aws-cdk/                  # AWS CDK Infrastructure
+│   ├── app.py                      # CDK Application entry point
+│   ├── economic_indicators_stack.py # Main stack (S3, DynamoDB, IAM)
+│   └── usdbrl_lambdas.py          # USD-BRL Lambda functions module
+├── configs/                        # Configuration Files
 │   ├── indicators.json
 │   └── dq-rules.yaml
-├── notebooks/
+├── notebooks/                      # Jupyter Notebooks
 │   └── analysis-athena.ipynb
-├── docs/
+├── docs/                          # Documentation
 │   └── Economic-Indicators.excalidraw
-└── tests/
-    └── unit/
+├── tests/                         # Test Files
+│   └── unit/
+├── cdk.json                       # CDK Configuration
+├── cdk.context.json              # CDK Context Cache
+└── cdk.out/                      # CDK Output (ignored)
 ```
 
 ## 10. Infrastructure as Code
 
-The project uses **Terraform** for infrastructure management:
+The project uses **AWS CDK (Cloud Development Kit)** for infrastructure management, providing a modern, programmatic approach to cloud resources:
 
-- **S3 Buckets**: Data lake with cost optimization (Intelligent Tiering)
-- **Lambda Functions**: Automated deployment with IAM roles
-- **DynamoDB**: State management for indicators
-- **EventBridge & SQS**: Event-driven orchestration
-- **Remote State**: S3 backend with DynamoDB locking
+### 🏗️ **CDK Architecture:**
+- **AWS CDK v2**: Infrastructure defined in Python for better integration with Lambda code
+- **Hybrid Modular Design**: Core resources in main stack, Lambda functions in separate modules
+- **Environment Isolation**: Configurable for Dev/Prod environments
 
-**Deploy infrastructure:**
+### 📦 **Infrastructure Components:**
+- **S3 Data Lake**: `dl-economic-indicators-prod` with Intelligent Tiering for cost optimization
+- **DynamoDB State Table**: `sgs-indicators-state` for tracking indicator processing state
+- **Lambda Functions**: Automated deployment with proper IAM roles and environment variables
+- **IAM Roles**: Least-privilege access policies for S3 and DynamoDB operations
+- **CloudWatch Logs**: 2-week retention for cost optimization
+
+### 🚀 **Deploy Infrastructure:**
+
+**Prerequisites:**
 ```bash
-cd infrastructure/terraform
-./setup-backend.sh      # Create Terraform backend (one-time)
-terraform init          # Initialize Terraform
-terraform plan          # Preview changes
-terraform apply         # Deploy infrastructure
+# Install Node.js and AWS CDK CLI
+npm install -g aws-cdk
+
+# Configure AWS credentials
+aws configure
+
+# Install Python dependencies
+pip install aws-cdk-lib constructs
 ```
+
+**Deployment Commands:**
+```bash
+# Bootstrap CDK (one-time setup per account/region)
+cdk bootstrap
+
+# Preview changes
+cdk synth
+
+# Deploy infrastructure
+cdk deploy
+
+# Destroy infrastructure (if needed)
+cdk destroy
+```
+
+### 🔄 **CDK Project Structure:**
+```
+infra-aws-cdk/
+├── app.py                          # CDK Application entry point
+├── economic_indicators_stack.py    # Main stack definition
+└── usdbrl_lambdas.py              # Lambda functions module
+```
+
+### 📋 **CDK Configuration Files:**
+- `cdk.json`: CDK CLI configuration and feature flags
+- `cdk.context.json`: Cached AWS account/region information
+- `cdk.out/`: Generated CloudFormation templates (ignored in Git)
+
+### 🎯 **Migration from Terraform:**
+This project originally used Terraform but was migrated to AWS CDK for:
+- **Better Python Integration**: Same language as Lambda functions
+- **Type Safety**: IDE support and compile-time error checking
+- **AWS Native**: Direct support for latest AWS features
+- **Simplified Deployment**: Single tool for infrastructure and application code
+
+---
+
+## 11. Current Implementation Status
+
+### ✅ **Completed:**
+- **USD-BRL Pipeline**: Complete medallion architecture implementation
+- **AWS CDK Infrastructure**: S3, DynamoDB, Lambda functions, and IAM roles
+- **Hybrid Modular Design**: Core infrastructure with separated Lambda modules
+- **Data Lake Setup**: Bronze/Silver/Gold layers with proper partitioning
+
+### 🚧 **In Progress:**
+- **Lambda Function Testing**: Validating deployed functions with real SGS API data
+- **Data Quality Rules**: Implementing comprehensive validation logic
+
+### 📋 **Planned:**
+- **Additional Indicators**: Selic, IPCA, GDP pipelines
+- **EventBridge Integration**: Event-driven orchestration
+- **SQS Queues**: Reliable message processing between layers
+- **Athena/Iceberg**: Analytics-ready data consumption
+- **Monitoring & Alerts**: CloudWatch dashboards and SNS notifications
+
+---
+
+## 12. Getting Started
+
+### 🔧 **Prerequisites:**
+1. **AWS Account** with appropriate permissions
+2. **AWS CLI** configured with credentials
+3. **Node.js** (for AWS CDK CLI)
+4. **Python 3.12+** with virtual environment
+
+### 🚀 **Quick Setup:**
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/VictorMsilva/economic-indicators-monitor.git
+cd economic-indicators-monitor
+```
+
+2. **Set up Python environment:**
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install aws-cdk-lib constructs
+```
+
+3. **Install CDK CLI:**
+```bash
+npm install -g aws-cdk
+```
+
+4. **Deploy infrastructure:**
+```bash
+cdk bootstrap  # One-time setup
+cdk deploy     # Deploy all resources
+```
+
+5. **Test Lambda functions:**
+```bash
+# Test monitor function
+aws lambda invoke --function-name usdbrl-monitor response.json
+
+# Test bronze2silver function  
+aws lambda invoke --function-name usdbrl-bronze2silver response.json
+
+# Test silver2gold function
+aws lambda invoke --function-name usdbrl-silver2gold response.json
+```
+
+### 📊 **Verify Deployment:**
+- **S3 Bucket**: `dl-economic-indicators-prod`
+- **DynamoDB**: `sgs-indicators-state`
+- **Lambda Functions**: `usdbrl-monitor`, `usdbrl-bronze2silver`, `usdbrl-silver2gold`
+
+For detailed development instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).

@@ -25,3 +25,6 @@ terraform.tfstate
 terraform.tfstate.backup
 *.tfvars
 *.tfplan
+
+# AWS CDK
+cdk.out/
